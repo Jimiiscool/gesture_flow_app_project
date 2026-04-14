@@ -4,6 +4,9 @@ import numpy as np
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
+cords_list_array = np.array([]).reshape(-1, 3)
+
+
 
 def count_fingers():
     fingers_up = []
@@ -38,18 +41,26 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) a
             cords_list = []
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                wrist = hand_landmarks.landmark[0]
                 result = count_fingers()
                 for num, cords in enumerate(hand_landmarks.landmark):
-                    hand_array = np.array([[cords.x, cords.y, cords.z]])
                     x_cords = f'X Cords: {cords.x}'
                     y_cords = f'Y Cords: {cords.y}'
+                    normalized_x = wrist.x - cords.x
+                    normalized_y = wrist.y - cords.y
+                    normalized_z = wrist.z - cords.z
+                    hand_array = np.array([[normalized_x, normalized_y, normalized_z]]).flatten()
                     cords_list.append((x_cords, y_cords))
                     num_fingers.append(result)
                     print(result)
+                    cords_list_array = np.vstack([cords_list_array, hand_array])
+                    
+
                     
         cv2.imshow('Hand Detection', img)
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
+print(cords_list_array)
 print(sum(num_fingers))        
 cap.release()
 cv2.destroyAllWindows()
