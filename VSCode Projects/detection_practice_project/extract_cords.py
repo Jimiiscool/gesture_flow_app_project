@@ -1,9 +1,9 @@
 import numpy as np
 import csv
-from hand_detection import get_cords
+from hand_detection import get_all_cords
 
 
-data = get_cords()
+data = get_all_cords(0)
 
 np.save('hand_cords.npy', data)
 
