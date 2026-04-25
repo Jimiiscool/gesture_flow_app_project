@@ -8,6 +8,7 @@ mp_hands = mp.solutions.hands
 hand_array = np.array([])
 cords_list_array = np.array([])
 all_cords = []
+label_counts = {'Fist': 0, 'Open': 0, 'Peace': 0}
 
 
 def get_all_cords(cap_device=0):
@@ -49,8 +50,17 @@ def get_all_cords(cap_device=0):
                     if label is not None:
                         frame_cords.append(label)
                         all_cords.append(frame_cords)
+                        label_counts[label] += 1
                         print(f'Landmark {num}: ({normalized_x}, {normalized_y}, {normalized_z}, {label})')
-                        print(len(all_cords))
+                        frame_count = len(all_cords)
+                        cv2.putText(img, f"Frames: {frame_count}", (10, 100),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        cv2.putText(img, f"Fist: {label_counts['Fist']}", (10, 140),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                        cv2.putText(img, f"Open: {label_counts['Open']}", (10, 170),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                        cv2.putText(img, f"Peace: {label_counts['Peace']}", (10, 200),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
                     else:
                         pass
