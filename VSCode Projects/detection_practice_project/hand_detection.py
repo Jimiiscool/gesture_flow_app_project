@@ -17,13 +17,14 @@ def get_all_cords(cap_device=0):
     with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
         while cap.isOpened():
             ret, frame = cap.read()
-            key = cv2.waitKey(10) & 0xFF
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img.flags.writeable = False
             results = hands.process(img)
             img.flags.writeable = True
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)  
-            
+
+            key = cv2.waitKey(10) & 0xFF
+  
             if key == ord('1'):
                 label = 'Fist'
             elif key == ord('2'):
@@ -49,6 +50,7 @@ def get_all_cords(cap_device=0):
                         frame_cords.append(label)
                         all_cords.append(frame_cords)
                         print(f'Landmark {num}: ({normalized_x}, {normalized_y}, {normalized_z}, {label})')
+                        print(len(all_cords))
 
                     else:
                         pass
