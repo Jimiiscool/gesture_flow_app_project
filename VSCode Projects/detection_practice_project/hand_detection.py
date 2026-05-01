@@ -1,6 +1,7 @@
 import mediapipe as mp
 import cv2
 import numpy as np
+import math
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
@@ -40,11 +41,14 @@ def get_all_cords(cap_device=0):
                 for hand_landmarks in results.multi_hand_landmarks:
                     mp_drawing.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                     wrist = hand_landmarks.landmark[0]
+                    ref = hand_landmarks.landmark[9]
+                    scale = math.sqrt((ref.x - wrist.x) ** 2 + (ref.y - wrist.y) ** 2 + (ref.z - wrist.z) ** 2)
+
                     frame_cords = []
                     for num, cords in enumerate(hand_landmarks.landmark):
-                        normalized_x = cords.x - wrist.x
-                        normalized_y = cords.y - wrist.y
-                        normalized_z = cords.z - wrist.z
+                        normalized_x = (cords.x - wrist.x)/scale
+                        normalized_y = (cords.y - wrist.y)/scale
+                        normalized_z = (cords.z - wrist.z)/scale
                         frame_cords.extend([normalized_x, normalized_y, normalized_z])
                         
                     if label is not None:
