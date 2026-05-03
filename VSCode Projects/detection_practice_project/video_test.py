@@ -5,6 +5,19 @@ import math
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 import joblib
+from collections import deque
+from collections import defaultdict
+
+def get_smoothed_prediction(buffer, decay=0.9):
+    scores = defaultdict(float)
+
+    for i, (pred, conf) in enumerate(buffer):
+         time_weight = decay**(len(buffer)-i) # Give more weight to recent predictions
+         scores[pred] += conf * time_weight
+        
+    return max(scores, key=scores.get)
+
+pred_buffer = deque(maxlen = 7)  # Buffer to hold the last 6 predictions
 
 
 test_model = joblib.load('C:/Users/ajibo/github_repos/gesture_flow_app_project/models/practice_project_models/first_model.pkl') 
@@ -13,8 +26,7 @@ test_model = joblib.load('C:/Users/ajibo/github_repos/gesture_flow_app_project/m
 hand_array = np.array([])
 cords_list_array = np.array([])
 all_cords = []
-label_counts = {'Fist': 0, 'Open': 0, 'Peace': 0}
-
+label_map = ['Fist', 'Open', 'Peace']  # Map numeric predictions to gesture labels
 
 label = None
 all_cords = []
@@ -45,9 +57,27 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) a
                         frame_cords.extend([normalized_x, normalized_y, normalized_z])
                     features = np.array(frame_cords).reshape(1, -1)
                     prediction = test_model.predict(features)
-                    cv2.putText(img, f"Prediction: {prediction[0]}", (10, 50),
+                    probs = test_model.predict_proba(features)
+                    class_index = list(test_model.classes_).index(prediction[0])  # Get the index of the predicted class
+                    confidence = probs[0][class_index]
+                    if confidence > 0.60:
+                        pred_buffer.append((prediction[0], confidence))
+                    else:
+                        pass  # Add the current prediction to the buffer
+                    smoothed_prediction = get_smoothed_prediction(pred_buffer, decay=0.9)  # Get the smoothed prediction from the buffer
+                    cv2.putText(img, f"Prediction: {smoothed_prediction}", (10, 50),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                        
+                    
+                    if confidence > 0.50:  
+                        cv2.putText(img, f"Confidence: {confidence:.2f}", (10, 90),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    else:
+                        cv2.putText(img, f"Unsure of Gesture", (10, 90),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            else: 
+                 cv2.putText(img, f"No Hand Detected", (10, 50),
+                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
 
                             
 
