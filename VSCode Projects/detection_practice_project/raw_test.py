@@ -17,6 +17,13 @@ def get_smoothed_prediction(buffer, decay=0.9):
         
     return max(scores, key=scores.get)
 
+def raw_predict(features, model):
+    prediction = model.predict(features)[0]
+    confidence = model.predict_proba(features)[0]  # Get the confidence of the predicted class
+    
+    class_index = list(model.classes_).index(prediction)  # Get the index of the predicted class
+    confidence = confidence[class_index]
+
 pred_buffer = deque(maxlen = 7)  # Buffer to hold the last 6 predictions
 
 
@@ -56,16 +63,13 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) a
                         normalized_z = (cords.z - wrist.z)/scale
                         frame_cords.extend([normalized_x, normalized_y, normalized_z])
                     features = np.array(frame_cords).reshape(1, -1)
-                    prediction = test_model.predict(features)
-                    probs = test_model.predict_proba(features)
-                    class_index = list(test_model.classes_).index(prediction[0])  # Get the index of the predicted class
-                    confidence = probs[0][class_index]
+                    prediction, confidence = raw_predict(features, test_model)
                     if confidence > 0.60:
                         pred_buffer.append((prediction[0], confidence))
                     else:
                         pass  # Add the current prediction to the buffer
                     smoothed_prediction = get_smoothed_prediction(pred_buffer, decay=0.9)  # Get the smoothed prediction from the buffer
-                    cv2.putText(img, f"Prediction: {smoothed_prediction}", (10, 50),
+                    cv2.putText(img, f"Prediction: {prediction[0]}", (10, 50),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                     
                     if confidence > 0.50:  
